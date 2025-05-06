@@ -1,0 +1,447 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard - Cybersecurity Education Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .chat-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+        }
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 75%;
+        }
+        .user-message {
+            justify-content: flex-end;
+        }
+        .user-message .message-content {
+            background-color: #0d6efd;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        .bot-message {
+            justify-content: flex-start;
+        }
+        .bot-message .message-content {
+            background-color: #f1f1f1;
+            color: #333;
+            border-bottom-left-radius: 5px;
+        }
+        .chat-footer {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+        .commands-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .command-button {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .quiz-container, .phishing-example {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .red-flag {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .quiz-feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .feedback-correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .feedback-incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .password-strength-meter {
+            height: 5px;
+            background-color: #e9ecef;
+            margin-top: 5px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .password-strength-value {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .strength-weak { background-color: #dc3545; }
+        .strength-fair { background-color: #ffc107; }
+        .strength-good { background-color: #17a2b8; }
+        .strength-strong { background-color: #28a745; }
+        
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div>
+                    <i class="fas fa-shield-alt me-2"></i>
+                    CyberGuard
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-light" id="helpBtn">
+                        <i class="fas fa-question-circle"></i> Help
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-body" id="chatBody">
+                <!-- Message history will be displayed here -->
+                <div class="message bot-message">
+                    <div class="message-content">
+                        Welcome to CyberGuard! I'm here to help you learn about cybersecurity in a fun and interactive way. 
+                        What would you like to learn about today? Try asking about password security, phishing, or use the command buttons below.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-footer">
+                <div class="commands-container">
+                    <button class="btn btn-sm btn-outline-secondary command-button" onclick="insertCommand('/lesson introduction')">
+                        <i class="fas fa-book me-1"></i> Intro Lesson
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary command-button" onclick="insertCommand('/lesson password_hygiene')">
+                        <i class="fas fa-key me-1"></i> Password Lesson
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary command-button" onclick="insertCommand('/lesson phishing_awareness')">
+                        <i class="fas fa-fish me-1"></i> Phishing Lesson
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary command-button" onclick="insertCommand('/phishing_example')">
+                        <i class="fas fa-envelope me-1"></i> Phishing Example
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary command-button" onclick="insertCommand('/quiz')">
+                        <i class="fas fa-question-circle me-1"></i> Take Quiz
+                    </button>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" id="userInput" class="form-control" placeholder="Type your message or question here...">
+                    <button class="btn btn-primary" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">CyberGuard Help</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Available Commands:</h6>
+                    <ul>
+                        <li><code>/lesson [topic]</code> - Start a specific lesson</li>
+                        <li><code>/quiz [topic]</code> - Take a quiz on a specific topic</li>
+                        <li><code>/check_password [your_password]</code> - Check password strength</li>
+                        <li><code>/phishing_example</code> - See a simulated phishing example</li>
+                    </ul>
+                    
+                    <h6>Available Topics:</h6>
+                    <ul>
+                        <li>introduction</li>
+                        <li>password_hygiene</li>
+                        <li>phishing_awareness</li>
+                        <li>safe_browsing (coming soon)</li>
+                        <li>two_factor_authentication (coming soon)</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatBody = document.getElementById('chatBody');
+            const userInput = document.getElementById('userInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const helpBtn = document.getElementById('helpBtn');
+            
+            // Initialize help modal
+            const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
+            helpBtn.addEventListener('click', () => {
+                helpModal.show();
+            });
+            
+            // Send message on button click
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Send message on Enter key
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Function to insert command to input field
+            window.insertCommand = function(command) {
+                userInput.value = command;
+                userInput.focus();
+            };
+            
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') return;
+                
+                // Add user message to chat
+                addMessageToChat(message, 'user');
+                userInput.value = '';
+                
+                // Send message to backend
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.type === 'quiz') {
+                        // Handle quiz response
+                        displayQuiz(data.response);
+                    } else if (data.type === 'phishing_example') {
+                        // Handle phishing example
+                        displayPhishingExample(data.response);
+                    } else {
+                        // Handle regular message
+                        addMessageToChat(data.response, 'bot');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessageToChat('Sorry, there was an error processing your request. Please try again.', 'bot');
+                });
+            }
+            
+            function addMessageToChat(message, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                // Handle markdown formatting
+                let formattedMessage = message;
+                // Convert markdown bullet points
+                formattedMessage = formattedMessage.replace(/- (.*?)(?=\n|$)/g, '<li>$1</li>');
+                if (formattedMessage.includes('<li>')) {
+                    formattedMessage = '<ul>' + formattedMessage + '</ul>';
+                }
+                // Convert markdown bold
+                formattedMessage = formattedMessage.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                // Convert markdown italic
+                formattedMessage = formattedMessage.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                // Convert newlines to <br>
+                formattedMessage = formattedMessage.replace(/\n/g, '<br>');
+                
+                contentDiv.innerHTML = formattedMessage;
+                messageDiv.appendChild(contentDiv);
+                chatBody.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+            
+            function displayPhishingExample(example) {
+                const exampleDiv = document.createElement('div');
+                exampleDiv.className = 'message bot-message';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                let exampleHtml = `
+                    <div class="phishing-example">
+                        <h5>Phishing Email Example</h5>
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <strong>From:</strong> ${example.from}<br>
+                                <strong>Subject:</strong> ${example.subject}
+                            </div>
+                            <div class="card-body">
+                                ${example.body.replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                        
+                        <div class="red-flags-section">
+                            <h6><i class="fas fa-exclamation-triangle text-danger"></i> Red Flags:</h6>
+                            <ul>
+                `;
+                
+                example.red_flags.forEach(flag => {
+                    exampleHtml += `<li class="red-flag">${flag}</li>`;
+                });
+                
+                exampleHtml += `
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                
+                contentDiv.innerHTML = exampleHtml;
+                exampleDiv.appendChild(contentDiv);
+                chatBody.appendChild(exampleDiv);
+                
+                // Scroll to bottom
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+            
+            function displayQuiz(quiz) {
+                const quizDiv = document.createElement('div');
+                quizDiv.className = 'message bot-message';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                let quizHtml = `
+                    <div class="quiz-container">
+                        <h5>Quiz: ${quiz.topic}</h5>
+                `;
+                
+                quiz.questions.forEach((q, index) => {
+                    quizHtml += `
+                        <div class="question mb-3" data-question-id="${q.id}">
+                            <p><strong>Q${index + 1}:</strong> ${q.question}</p>
+                            <div class="options">
+                    `;
+                    
+                    q.options.forEach((option, optIndex) => {
+                        quizHtml += `
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="question_${q.id}" id="option_${q.id}_${optIndex}" value="${option}">
+                                <label class="form-check-label" for="option_${q.id}_${optIndex}">
+                                    ${option}
+                                </label>
+                            </div>
+                        `;
+                    });
+                    
+                    quizHtml += `
+                            </div>
+                            <div class="quiz-feedback" id="feedback_${q.id}" style="display: none;"></div>
+                        </div>
+                    `;
+                });
+                
+                quizHtml += `
+                        <button class="btn btn-primary btn-sm check-answers">Check Answers</button>
+                    </div>
+                `;
+                
+                contentDiv.innerHTML = quizHtml;
+                quizDiv.appendChild(contentDiv);
+                chatBody.appendChild(quizDiv);
+                
+                // Scroll to bottom
+                chatBody.scrollTop = chatBody.scrollHeight;
+                
+                // Add event listener for checking answers
+                const checkButton = contentDiv.querySelector('.check-answers');
+                checkButton.addEventListener('click', function() {
+                    const questions = contentDiv.querySelectorAll('.question');
+                    
+                    questions.forEach(question => {
+                        const questionId = question.dataset.questionId;
+                        const selectedOption = question.querySelector('input[name="question_' + questionId + '"]:checked');
+                        const feedbackDiv = question.querySelector('#feedback_' + questionId);
+                        
+                        if (!selectedOption) {
+                            feedbackDiv.className = 'quiz-feedback feedback-incorrect';
+                            feedbackDiv.textContent = 'Please select an answer.';
+                            feedbackDiv.style.display = 'block';
+                            return;
+                        }
+                        
+                        // Send answer to backend for evaluation
+                        fetch('/api/check_answer', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ 
+                                question_id: questionId, 
+                                answer: selectedOption.value 
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            feedbackDiv.className = 'quiz-feedback ' + (data.correct ? 'feedback-correct' : 'feedback-incorrect');
+                            feedbackDiv.textContent = data.feedback;
+                            feedbackDiv.style.display = 'block';
+                            
+                            // Disable the options after checking
+                            const options = question.querySelectorAll('input[type="radio"]');
+                            options.forEach(opt => {
+                                opt.disabled = true;
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            feedbackDiv.className = 'quiz-feedback feedback-incorrect';
+                            feedbackDiv.textContent = 'Error checking answer. Please try again.';
+                            feedbackDiv.style.display = 'block';
+                        });
